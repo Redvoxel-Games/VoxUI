@@ -3,6 +3,7 @@ using Silk.NET.Core;
 using Silk.NET.OpenGL;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using StbImageSharp;
 using VoxUI.Math;
 using VoxUI.Rendering;
 
@@ -14,12 +15,9 @@ public static class Images
 
     public static unsafe uint LoadImageFromStream(Stream stream)
     {
-        using Image<Rgba32> image = Image.Load<Rgba32>(stream);
-        
-        byte[] pixels = new byte[image.Width * image.Height * 4];
-        image.CopyPixelDataTo(pixels);
+        ImageResult result = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
 
-        var rawImg = new RawImage(image.Width, image.Height, pixels);
+        byte[] pixels = result.Data;
         
         var texture = Gl.GenTexture();
         Gl.ActiveTexture(TextureUnit.Texture0);
@@ -28,8 +26,8 @@ public static class Images
         // Define a pointer to the image data
         fixed (byte* ptr = pixels)
             // Here we use "result.Width" and "result.Height" to tell OpenGL about how big our texture is.
-            Gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)rawImg.Width,
-                (uint)rawImg.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
+            Gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)result.Width,
+                (uint)result.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
         
         Gl.TexParameter(
             TextureTarget.Texture2D,
