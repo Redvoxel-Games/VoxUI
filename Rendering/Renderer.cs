@@ -111,7 +111,6 @@ public static class Renderer
     public static void DoDraw()
     {
         Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-        Gl.Clear(ClearBufferMask.ColorBufferBit);
         
         Gl.Enable(EnableCap.Blend);
         Gl.BlendFunc(
@@ -202,6 +201,8 @@ public static class Renderer
             WindowDefinition.WindowToDock = null;
         
         Input.Clear();
+        
+        Gl.Disable(EnableCap.Blend);
     }
 
     public static WindowDefinition? GetHoveredWindow()
