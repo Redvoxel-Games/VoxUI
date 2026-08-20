@@ -12,7 +12,6 @@ public static class Input
     
     public static Vector2 MousePosition => new(Mouse.Position.X, Mouse.Position.Y);
     public static Vector2 MouseDelta;
-    private static Vector2 _prevScroll;
     public static Vector2 MouseWheelDelta;
     
     public static readonly Dictionary<MouseButton, bool> MouseJustPressed = [];
