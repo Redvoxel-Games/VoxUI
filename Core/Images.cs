@@ -1,8 +1,6 @@
 using System.Reflection;
 using Silk.NET.Core;
 using Silk.NET.OpenGL;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using StbImageSharp;
 using VoxUI.Math;
 using VoxUI.Rendering;
