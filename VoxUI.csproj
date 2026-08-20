@@ -8,6 +8,7 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         
         <Title>VoxUI</Title>
+        <Authors>Redvoxel Games</Authors>
         <Description>Small immediate-mode UI system for Silk.NET.</Description>
         <PackageProjectUrl>https://github.com/Redvoxel-Games/VoxUI</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Redvoxel-Games/VoxUI</RepositoryUrl>

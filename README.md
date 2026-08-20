@@ -15,8 +15,8 @@ The only packages you need to install is VoxUI and Silk.NET along with its depen
 Use either a NuGet package manager or run the following command in your project:
 ```
 dotnet package add Silk.NET
+dotnet package add VoxUI
 ```
-TODO: Package VoxUI and upload to NuGet.
 
 Here is an example of how to set up for VoxUI:
 
