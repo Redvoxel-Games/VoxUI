@@ -1,6 +1,3 @@
-UI framework for voxgen/voxedit, not for use in games, just the editor and player.
-Supposed to replace ImGui to both increase customizability and control over how things render.
-
 # VoxUI
 VoxUI is an Immediate-Mode GUI system similar to Dear ImGui, But built specifically for C# Silk.NET so you don't have to use a pesky binding.
 
@@ -157,6 +154,9 @@ VoxUIR.RadioButton("Radio 2", ref Radio2);
 VoxUIR.RadioButton("Radio 3", ref Radio3);
 VoxUIR.EndRadio();
 ```
+
+And the result of the above mess of example code looks like this:
+![VoxUI Window](Assets/Gallery/ExampleResult.png)
 
 ## Custom rendering
 
