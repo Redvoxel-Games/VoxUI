@@ -6,7 +6,23 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        
+        <Title>VoxUI</Title>
+        <Description>Small immediate-mode UI system for Silk.NET.</Description>
+        <PackageProjectUrl>https://github.com/Redvoxel-Games/VoxUI</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Redvoxel-Games/VoxUI</RepositoryUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Version>1.0.0</Version>
+        <PackageTags>
+            UI, GUI, Silk, Silk.NET, ImGui
+        </PackageTags>
     </PropertyGroup>
+    
+    <ItemGroup>
+        <None Include="../README.md" Pack="true" PackagePath="\"/>
+        <None Include="../LICENSE" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="FreeTypeSharp" Version="3.1.0" />
