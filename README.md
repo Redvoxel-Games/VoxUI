@@ -1,24 +1,7 @@
 UI framework for voxgen/voxedit, not for use in games, just the editor and player.
 Supposed to replace ImGui to both increase customizability and control over how things render.
 
-TODOS:
-* Window resizing
-* * And scrolling (DONE)
-* Window docking (Almost done)
-* Text inputs (DONE - Needs improvement)
-* Number inputs (DONE - Needs improvement)
-* Slider inputs (DONE - Needs improvement)
-* Color inputs
-* Hierarchy (Tree nodes) (DONE)
-* More layout stuff
-* * Tables
-* * Dock builder (DONE)
-* * Etc
-* Code editor
-* Gizmo (For editor viewport)
-* Drag-Drop system
-
-# Readme for eventual public release
+# VoxUI
 VoxUI is an Immediate-Mode GUI system similar to Dear ImGui, But built specifically for C# Silk.NET so you don't have to use a pesky binding.
 
 <hr>
