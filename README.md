@@ -156,6 +156,7 @@ VoxUIR.EndRadio();
 ```
 
 And the result of the above mess of example code looks like this:
+
 ![VoxUI Window](Assets/Gallery/ExampleResult.png)
 
 ## Custom rendering
