@@ -15,12 +15,32 @@ public class WindowDefinition
         return id != null ? Windows[id.Value] : new WindowDefinition(displayName, windowName);
     }
 
-    public uint FocusOrder;
+    public int FocusOrder;
     public readonly uint Id;
     public string DisplayName;
     public readonly string WindowName;
     public bool ShowCloseButton = false;
     public bool CloseButtonHovered = false;
+
+    public float StoredDrawX;
+    public float StoredDrawY;
+    public float StoredMaxSizeX;
+    public float StoredMaxSizeY;
+    public float StoredPrevItemX;
+    public float StoredPrevItemY;
+    public float StoredPrevItemWidth;
+    public float StoredPrevItemHeight;
+
+    public bool ShouldShowHeader
+    {
+        get
+        {
+            if (WindowFlags.HasFlag(WindowFlags.NoHeader) || StackDockOverride)
+                return false;
+            
+            return true;
+        }
+    }
     
     public bool HeaderHovered = false;
     public bool IsBeingDragged = false;
@@ -46,7 +66,7 @@ public class WindowDefinition
     
     public Vector2 PreDockSize = new(16,16);
     
-    public Vector2 CanvasSize => Size - new Vector2(0, UIStyle.WindowHeaderSize);
+    public Vector2 CanvasSize => Size - new Vector2(0, (ShouldShowHeader ? UIStyle.WindowHeaderSize : 0));
     public float ScrollbarSizeX => (CanvasSize.X / ContentSize.X) * CanvasSize.X;
     public float ScrollbarSizeY => (CanvasSize.Y / ContentSize.Y) * CanvasSize.Y;
 
@@ -59,7 +79,7 @@ public class WindowDefinition
     public float ScrollbarYPosX => CanvasSize.X - UIStyle.ScrollbarWidth + Position.X;
 
     public float ScrollbarYPosY =>
-        ((CanvasSize.Y - ScrollbarSizeY) * -ScrollProgY) + Position.Y + UIStyle.WindowHeaderSize;
+        ((CanvasSize.Y - ScrollbarSizeY) * -ScrollProgY) + Position.Y + (ShouldShowHeader ? UIStyle.WindowHeaderSize : 0);
 
     public bool ScrollbarYUsing;
     public float ScrollbarYDragOffset;
@@ -95,6 +115,7 @@ public class WindowDefinition
             }
         }
     } = false;
+
     internal WindowDock? OwnerDock = null;
 
     internal bool StackDockOverride = false;
@@ -105,6 +126,28 @@ public class WindowDefinition
     {
         if (OwnerDock == null)
             return;
+
+        if (direction == ActiveDockDirection.Stack)
+        {
+            var stackDock = new StackedDock();
+            stackDock.Add(this);
+            stackDock.Add(window);
+
+            var parentDock = OwnerDock.ParentMember;
+            if (parentDock is Dock dock)
+            {
+                if (dock.Member1 == OwnerDock)
+                {
+                    dock.Member1 = stackDock;
+                }
+                else
+                {
+                    dock.Member2 = stackDock;
+                }
+            }
+            
+            return;
+        }
         
         OwnerDock.Dock(new WindowDock(window), direction, split);
     }
@@ -126,10 +169,10 @@ public class WindowDefinition
         Windows.Add(Id, this);
         WindowIds.Add(windowName, Id);
 
-        FocusOrder = Id;
+        FocusOrder = (int)Id;
     }
 
-    public static WindowDefinition? GetWindowFromFocus(uint order)
+    public static WindowDefinition? GetWindowFromFocus(int order)
     {
         foreach (var window in Windows)
         {
@@ -149,7 +192,7 @@ public class WindowDefinition
 
         foreach (var window in Windows)
         {
-            if (window.Value != this && window.Value.FocusOrder < prevFocus)
+            if (window.Value != this && window.Value.FocusOrder < prevFocus && !window.Value.WindowFlags.HasFlag(WindowFlags.IsChild))
             {
                 window.Value.FocusOrder++;
             }

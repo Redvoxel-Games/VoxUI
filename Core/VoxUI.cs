@@ -19,6 +19,11 @@ public static partial class VoxUIR
     private static float _previousItemY;
     private static float _previousItemWidth;
     private static float _previousItemHeight;
+
+    private static float? _nextWindowSizeX;
+    private static float? _nextWindowSizeY;
+    private static float? _nextWindowPosX;
+    private static float? _nextWindowPosY;
     
     private static FontSet FontSet => Renderer.OpenSans;
     public static Font HeaderFont => FontSet.GetFontForSize(UIStyle.WindowHeaderSize);
@@ -39,8 +44,8 @@ public static partial class VoxUIR
     {
         _currentDrawX = 0;
         _currentDrawY = 0;
-        _currentMaxSizeX = 0;
-        _currentMaxSizeY = 0;
+        _currentMaxSizeX = size?.X ?? 0;
+        _currentMaxSizeY = size?.Y ?? 0;
         
         _previousItemX = 0;
         _previousItemY = 0;
@@ -64,12 +69,12 @@ public static partial class VoxUIR
         CurrentWindow = WindowDefinition.GetWindowDefinition(windowName, displayName);
         CurrentWindow.DisplayName = displayName;
         CurrentWindow.ShowCloseButton = showCloseButton;
-        CurrentWindow.IsBeingDrawn = !CurrentWindow.StackDockOverride;
+        CurrentWindow.IsBeingDrawn = (CurrentWindow.StackDockOverride && CurrentWindow.StackDockDrawing) || !CurrentWindow.StackDockOverride;
         CurrentWindow.StackDrawing = true;
         CurrentWindow.WindowFlags = windowFlags;
         
         var headerSize = HeaderFont.GetTextSize(displayName);
-        _currentMaxSizeX = headerSize.X + UIStyle.WindowPadding;
+        _currentMaxSizeX = MathF.Max(_currentMaxSizeX, headerSize.X + UIStyle.WindowPadding);
 
         if (showCloseButton)
         {
@@ -123,7 +128,7 @@ public static partial class VoxUIR
         var headerInteractSize = CurrentWindow.DockOverride ? headerSize + new Vector2(UIStyle.WindowPadding*2) : new Vector2(CurrentWindow.Size.X, UIStyle.WindowHeaderSize);
         
 
-        if (IsMouseInsideRect(CurrentWindow.Position, headerInteractSize) && Renderer.GetHoveredWindow() == CurrentWindow)
+        if (IsMouseInsideRect(CurrentWindow.Position, headerInteractSize) && Renderer.GetHoveredWindow() == CurrentWindow && CurrentWindow.ShouldShowHeader)
         {
             CurrentWindow.HeaderHovered = true;
             if (IsMouseButtonJustPressed(MouseButton.Left) && !windowFlags.HasFlag(WindowFlags.NoDrag))
@@ -207,18 +212,37 @@ public static partial class VoxUIR
             CurrentWindow.Focus();
         }
 
+        if (_nextWindowSizeX.HasValue)
+        {
+            CurrentWindow.Size = new Vector2(_nextWindowSizeX.Value, CurrentWindow.Size.Y);
+            _nextWindowSizeX = null;
+        }
+
+        if (_nextWindowSizeY.HasValue)
+        {
+            CurrentWindow.Size = new Vector2(CurrentWindow.Size.X, _nextWindowSizeY.Value);
+            _nextWindowSizeY = null;
+        }
+
+        if (_nextWindowPosX.HasValue)
+        {
+            CurrentWindow.Position = new Vector2(_nextWindowPosX.Value, CurrentWindow.Position.Y);
+            _nextWindowPosX = null;
+        }
+
+        if (_nextWindowPosY.HasValue)
+        {
+            CurrentWindow.Position = new Vector2(CurrentWindow.Position.X, _nextWindowPosY.Value);
+            _nextWindowPosY = null;
+        }
+
         if (!CurrentWindow.HasBeenDrawn)
         {
             CurrentWindow.HasBeenDrawn = true;
             CurrentWindow.Focus();
         }
-        
-        bool displayHeader = (!CurrentWindow.WindowFlags.HasFlag(WindowFlags.NoHeader) || CurrentWindow.DockOverride);
 
-        if (CurrentWindow.StackDockOverride)
-        {
-            displayHeader = false;
-        }
+        bool displayHeader = CurrentWindow.ShouldShowHeader;
         
         float headerSize = displayHeader ? UIStyle.WindowHeaderSize : 0;
 
@@ -233,6 +257,103 @@ public static partial class VoxUIR
         
         CurrentWindow.ContentSize = new Vector2(_currentMaxSizeX + UIStyle.WindowPadding*2, _currentMaxSizeY + UIStyle.WindowPadding*2 + headerSize);
 
+        _handleScroll();
+        
+        var cornerRadius = CurrentWindow.DockOverride ? 0 : UIStyle.WindowCornerRadius;
+        
+        var headerRadii = CurrentWindow.DockOverride ? CornerRadii.TopBottom(UIStyle.WindowCornerRadius, 0) : CornerRadii.TopBottom(cornerRadius, 0);
+        var fullRadii = CornerRadii.All(cornerRadius);
+        
+        var primaryColor = UIStyle.PrimaryColor;
+
+        if (CurrentWindow.IsBeingDragged)
+        {
+            primaryColor = primaryColor.Lerp(Color4.Black, 0.2f);
+        }
+        else if (CurrentWindow.HeaderHovered)
+        {
+            primaryColor = primaryColor.Lerp(Color4.White, 0.1f);
+        }
+
+        if (displayHeader && !CurrentWindow.DockOverride)
+        {
+            Renderer.AddRect(CurrentWindow.Position, new(CurrentWindow.Size.X, headerSize), primaryColor, headerRadii, zIndex: 10);
+            Renderer.AddText(CurrentWindow.Position + new Vector2(UIStyle.WindowPadding), CurrentWindow.DisplayName, (int)headerSize, UIStyle.HeaderTextColor, 11);
+        }
+        else if (displayHeader && CurrentWindow.DockOverride)
+        {
+            var headerTextSize = HeaderFont.GetTextSize(CurrentWindow.DisplayName) + new Vector2(UIStyle.WindowPadding * 2);
+            Renderer.AddRect(CurrentWindow.Position + new Vector2(0, headerSize - 2), new(CurrentWindow.Size.X, 2),
+                primaryColor, zIndex: 10);
+            Renderer.AddRect(CurrentWindow.Position, headerTextSize + new Vector2(UIStyle.WindowPadding), primaryColor, headerRadii, zIndex: 10);
+            Renderer.AddText(CurrentWindow.Position + new Vector2(UIStyle.WindowPadding), CurrentWindow.DisplayName, (int)headerSize, UIStyle.HeaderTextColor, 11);
+        }
+
+        var offsetPos = (CurrentWindow.DockOverride && !CurrentWindow.StackDockOverride) ? new Vector2(0, UIStyle.WindowHeaderSize) : new Vector2();
+        Renderer.AddRect(CurrentWindow.Position + offsetPos, CurrentWindow.Size - offsetPos, UIStyle.BackgroundColor, fullRadii, zIndex: -1);
+
+        if (CurrentWindow.ShowCloseButton)
+        {
+            var closeButtonSize = new Vector2(headerSize,headerSize);
+            if (CurrentWindow.CloseButtonHovered)
+            {
+                Renderer.AddRect(CurrentWindow.Position + new Vector2(CurrentWindow.Size.X-closeButtonSize.X),
+                    new Vector2(headerSize,headerSize),
+                    new Color4(0,0,0,0.5f), zIndex:11);
+            }
+
+            var offset = new Vector2(4, 4);
+            Renderer.AddImage(CurrentWindow.Position + new Vector2(CurrentWindow.Size.X-closeButtonSize.X) + offset, closeButtonSize - offset*2, Images.Xmark, 11);
+        }
+        
+        if (UIStyle.WindowOutline)
+        {
+            if (CurrentWindow.DockOverride)
+            {
+                var outlinePos = CurrentWindow.Position;
+                var outlineSize = CurrentWindow.Size;
+
+                if (!CurrentWindow.StackDockOverride)
+                {
+                    outlinePos += new Vector2(0, UIStyle.WindowHeaderSize);
+                    outlineSize -= new Vector2(0, UIStyle.WindowHeaderSize);
+                }
+                else
+                {
+                    outlinePos -= new Vector2(0, 1);
+                    outlineSize += new Vector2(0, 1);
+                    Renderer.AddRect(CurrentWindow.Position - new Vector2(0,2), new(CurrentWindow.Size.X, 2),
+                        primaryColor, zIndex: 11, noClipping: true);
+                }
+                
+                Renderer.AddRect(outlinePos, outlineSize, primaryColor.Lerp(UIStyle.BackgroundColor, 0.5f), fullRadii, 1, 10);
+            }
+            else
+            {
+                Renderer.AddRect(CurrentWindow.Position, CurrentWindow.Size, primaryColor, fullRadii, 1, 10);
+            }
+        }
+        
+        CurrentWindow = null;
+        _currentDrawX = 0;
+        _currentDrawY = 0;
+        _currentMaxSizeX = 0;
+        _currentMaxSizeY = 0;
+        _previousItemX = 0;
+        _previousItemY = 0;
+        _previousItemWidth = 0;
+        _previousItemHeight = 0;
+    }
+
+    private static void _handleScroll()
+    {
+        if (CurrentWindow == null)
+            return;
+        
+        bool displayHeader = CurrentWindow.ShouldShowHeader;
+        
+        float headerSize = displayHeader ? UIStyle.WindowHeaderSize : 0;
+        
         if (IsCurrentWindowHovered() || CurrentWindow.ScrollbarYUsing)
         {
             var wheelDelta = GetMouseWheelDelta();
@@ -308,62 +429,6 @@ public static partial class VoxUIR
         }
         
         CurrentWindow.ScrollSpeed -= CurrentWindow.ScrollSpeed * decay * dt;
-        
-        var cornerRadius = CurrentWindow.DockOverride ? 0 : UIStyle.WindowCornerRadius;
-        
-        var headerRadii = new CornerRadii(cornerRadius, cornerRadius);
-        var fullRadii = CornerRadii.All(cornerRadius);
-        
-        var primaryColor = UIStyle.PrimaryColor;
-
-        if (CurrentWindow.IsBeingDragged)
-        {
-            primaryColor = primaryColor.Lerp(Color4.Black, 0.2f);
-        }
-        else if (CurrentWindow.HeaderHovered)
-        {
-            primaryColor = primaryColor.Lerp(Color4.White, 0.1f);
-        }
-
-        if (displayHeader && !CurrentWindow.DockOverride)
-        {
-            Renderer.AddRect(CurrentWindow.Position, new(CurrentWindow.Size.X, headerSize), primaryColor, headerRadii, zIndex: 10);
-            Renderer.AddText(CurrentWindow.Position + new Vector2(UIStyle.WindowPadding), CurrentWindow.DisplayName, (int)headerSize, UIStyle.HeaderTextColor, 11);
-        }
-        else if (displayHeader && CurrentWindow.DockOverride)
-        {
-            var headerTextSize = HeaderFont.GetTextSize(CurrentWindow.DisplayName) + new Vector2(UIStyle.WindowPadding * 2);
-            Renderer.AddRect(CurrentWindow.Position + new Vector2(0, headerSize - 2), new(CurrentWindow.Size.X, 2),
-                primaryColor, zIndex: 10);
-            Renderer.AddRect(CurrentWindow.Position, headerTextSize + new Vector2(UIStyle.WindowPadding), primaryColor, headerRadii, zIndex: 10);
-            Renderer.AddText(CurrentWindow.Position + new Vector2(UIStyle.WindowPadding), CurrentWindow.DisplayName, (int)headerSize, UIStyle.HeaderTextColor, 11);
-        }
-        Renderer.AddRect(CurrentWindow.Position, CurrentWindow.Size, UIStyle.BackgroundColor, fullRadii, zIndex: -1);
-
-        if (CurrentWindow.ShowCloseButton)
-        {
-            var closeButtonSize = new Vector2(headerSize,headerSize);
-            if (CurrentWindow.CloseButtonHovered)
-            {
-                Renderer.AddRect(CurrentWindow.Position + new Vector2(CurrentWindow.Size.X-closeButtonSize.X),
-                    new Vector2(headerSize,headerSize),
-                    new Color4(0,0,0,0.5f), zIndex:11);
-            }
-
-            var offset = new Vector2(4, 4);
-            Renderer.AddImage(CurrentWindow.Position + new Vector2(CurrentWindow.Size.X-closeButtonSize.X) + offset, closeButtonSize - offset*2, Images.Xmark, 11);
-        }
-        
-        if (UIStyle.WindowOutline)
-        {
-            Renderer.AddRect(CurrentWindow.Position, CurrentWindow.Size, primaryColor, fullRadii, 1, 10);
-        }
-        
-        CurrentWindow = null;
-        _currentDrawX = 0;
-        _currentDrawY = 0;
-        _currentMaxSizeX = 0;
-        _currentMaxSizeY = 0;
     }
 
     /// <summary>
@@ -382,7 +447,7 @@ public static partial class VoxUIR
         if (CurrentWindow == null)
             throw new Exception("Current window is null");
         
-        bool displayHeader = !CurrentWindow.WindowFlags.HasFlag(WindowFlags.NoHeader) || CurrentWindow.DockOverride;
+        bool displayHeader = CurrentWindow.ShouldShowHeader;
         
         if (CurrentWindow.StackDockOverride)
         {
@@ -540,5 +605,23 @@ public static partial class VoxUIR
         _currentDrawX = _previousItemX + _previousItemWidth + UIStyle.ItemSpacing;
         
         // Advance(_previousItemWidth + UIStyle.ItemSpacing,-_previousItemHeight - UIStyle.ItemSpacing, 0, 0);
+    }
+
+    /// <summary>
+    /// Sets the size of the next window to be drawn.
+    /// </summary>
+    public static void SetNextWindowSize(float width, float height)
+    {
+        _nextWindowSizeX = width;
+        _nextWindowSizeY = height;
+    }
+
+    /// <summary>
+    /// Sets the position of the next window to be drawn.
+    /// </summary>
+    public static void SetNextWindowPosition(float x, float y)
+    {
+        _nextWindowPosX = x;
+        _nextWindowPosY = y;
     }
 }

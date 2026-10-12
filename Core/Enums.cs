@@ -11,23 +11,27 @@ public enum WindowFlags : uint
     /// <summary>
     /// Stops window from being dragged.
     /// </summary>
-    NoDrag =    0b0000_0001,
-    NoHeader =  0b0000_0010,
+    NoDrag =    0b0000_0000_0000_0001,
+    
+    /// <summary>
+    /// Removes the window header
+    /// </summary>
+    NoHeader =  0b0000_0000_0000_0010,
     
     // TODO
-    NoResizeX = 0b0000_0100,
-    NoResizeY = 0b0000_1000,
-    NoResize =  0b0000_1100,
+    NoResizeX = 0b0000_0000_0000_0100,
+    NoResizeY = 0b0000_0000_0000_1000,
+    NoResize =  0b0000_0000_0000_1100,
     
     /// <summary>
     /// Automatically resizes on the X axis.
     /// </summary>
-    AutoSizeX = 0b0001_0100,
+    AutoSizeX = 0b0000_0000_0001_0100,
     
     /// <summary>
     /// Automatically resizes on the Y axis.
     /// </summary>
-    AutoSizeY = 0b0010_1000,
+    AutoSizeY = 0b0000_0000_0010_1000,
     
     /// <summary>
     /// Automatically resizes on both axes.
@@ -37,17 +41,22 @@ public enum WindowFlags : uint
     /// <summary>
     /// Disables scrolling on the X axis.
     /// </summary>
-    NoScrollX = 0b0100_0000,
+    NoScrollX = 0b0000_0000_0100_0000,
     
     /// <summary>
     /// Disables scrolling on the Y axis.
     /// </summary>
-    NoScrollY = 0b1000_0000,
+    NoScrollY = 0b0000_0000_1000_0000,
     
     /// <summary>
     /// Disables scrolling on both axes.
     /// </summary>
     NoScroll = NoScrollX | NoScrollY,
+    
+    /// <summary>
+    /// Marks as a child of another window
+    /// </summary>
+    IsChild = 0b0000_0001_0000_0000,
 }
 
 [Flags]

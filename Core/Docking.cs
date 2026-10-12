@@ -1,5 +1,6 @@
 ﻿using System.Xml;
 using Silk.NET.Input;
+using Silk.NET.Windowing;
 using VoxUI.Math;
 using VoxUI.Rendering;
 
@@ -557,7 +558,7 @@ public class StackedDock : DockMember
         {
             var window = _windows[index];
 
-            var headerTextSize = VoxUIR.HeaderFont.GetTextSize(window.DisplayName) + new Vector2(UIStyle.WindowPadding*2,0);
+            var headerTextSize = VoxUIR.HeaderFont.GetTextSize(window.DisplayName) + new Vector2(UIStyle.WindowPadding*2,0) + 2;
             
             var tabPos = Position + new Vector2(accumulatedOffset);
 
@@ -618,12 +619,17 @@ public class StackedDock : DockMember
                 }
             }
 
+            if (OpenWindow != index)
+            {
+                color = color.Lerp(Color4.Black, 0.2f);
+            }
+
             int zIndex = 10;
 
             if (_draggingWindow == index)
                 zIndex += 2;
             
-            Renderer.AddRect(tabPos, headerTextSize, color, zIndex:zIndex, focusOrder:focusOrder, noClipping: true);
+            Renderer.AddRect(tabPos, headerTextSize - new Vector2(0,2), color, CornerRadii.TopBottom(UIStyle.WindowCornerRadius,0), zIndex:zIndex, focusOrder:focusOrder, noClipping: true);
             Renderer.AddText(tabPos + new Vector2(UIStyle.WindowPadding), window.DisplayName, UIStyle.WindowHeaderSize, UIStyle.HeaderTextColor, zIndex+1, noClipping:true);
             
             if (_draggingWindow != index)

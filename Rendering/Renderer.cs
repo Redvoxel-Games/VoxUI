@@ -10,7 +10,8 @@ namespace VoxUI.Rendering;
 
 public abstract class DrawCommand(int zIndex)
 {
-    public uint FocusOrder = VoxUIR.CurrentWindow != null ? VoxUIR.CurrentWindow.FocusOrder : 0;
+    public uint WindowID = VoxUIR.CurrentWindow?.Id ?? 0;
+    public int FocusOrder = WindowDefinition.Windows[VoxUIR.CurrentWindow?.Id ?? 0].FocusOrder;
     public readonly int ZIndex = zIndex;
     public bool NoClipping = false;
     public abstract void Draw(GL gl, Vector2 offset);
@@ -120,8 +121,8 @@ public static class Renderer
         
         RootDock?.Handle();
 
-        Dictionary<uint, List<DrawCommand>> focusOrdersDocked = [];
-        Dictionary<uint, List<DrawCommand>> focusOrdersFree = [];
+        Dictionary<int, List<DrawCommand>> focusOrdersDocked = [];
+        Dictionary<int, List<DrawCommand>> focusOrdersFree = [];
         
         foreach (var command in DrawList)
         {
@@ -165,13 +166,13 @@ public static class Renderer
         
         foreach (var order in focusOrdersFree.OrderByDescending(x => x.Key))
         {
-            var window = WindowDefinition.GetWindowFromFocus(order.Key);
-            if (window == null) continue;
-            
-            Gl.ScissorIndexed(0, (int)window.Position.X, (int)(Window.Size.Y - window.Position.Y - window.Size.Y), (uint)window.Size.X, (uint)window.Size.Y);
-            Gl.Enable(EnableCap.ScissorTest, 0);
             foreach (var draw in order.Value.OrderBy(x => x.ZIndex))
             {
+                var window = WindowDefinition.Windows[draw.WindowID];
+                
+                Gl.ScissorIndexed(0, (int)window.Position.X, (int)(Window.Size.Y - window.Position.Y - window.Size.Y), (uint)window.Size.X, (uint)window.Size.Y);
+                Gl.Enable(EnableCap.ScissorTest, 0);
+                
                 if (draw.NoClipping)
                 {
                     Gl.Disable(EnableCap.ScissorTest, 0);
@@ -184,9 +185,9 @@ public static class Renderer
             }
         }
         DrawList.Clear();
-        
-        Gl.Disable(EnableCap.ScissorTest);
 
+        Gl.Disable(EnableCap.ScissorTest);
+        
         foreach (var draw in OverlayList.OrderBy(x => x.ZIndex))
         {
             draw.Draw(Gl, new());
@@ -208,7 +209,6 @@ public static class Renderer
     public static WindowDefinition? GetHoveredWindow()
     {
         var mousePos = Input.MousePosition;
-        
         
         List<WindowDefinition> freeWindows = [];
         List<WindowDefinition> dockedWindows = [];
@@ -253,7 +253,7 @@ public static class Renderer
         return null;
     }
 
-    public static void AddRect(float x, float y, float width, float height, Color4? color = null, CornerRadii? cornerRadii = null, float lineWidth = -1, int zIndex = 0, bool overlay = false, uint? focusOrder = null, bool noClipping = false)
+    public static void AddRect(float x, float y, float width, float height, Color4? color = null, CornerRadii? cornerRadii = null, float lineWidth = -1, int zIndex = 0, bool overlay = false, int? focusOrder = null, bool noClipping = false)
     {
         var rect = new DrawRect(
             x, y, width, height,
@@ -270,7 +270,7 @@ public static class Renderer
         (overlay ? OverlayList : DrawList).Add(rect);
     }
     public static void AddRect(Vector2 position, Vector2 size, Color4? color = null, CornerRadii? cornerRadii = null,
-        float lineWidth = -1, int zIndex = 0, bool overlay = false, uint? focusOrder = null, bool noClipping = false)
+        float lineWidth = -1, int zIndex = 0, bool overlay = false, int? focusOrder = null, bool noClipping = false)
     {
         AddRect(position.X, position.Y, size.X, size.Y, color, cornerRadii, lineWidth, zIndex, overlay, focusOrder, noClipping);
     }
@@ -307,6 +307,7 @@ public static class Renderer
     {
         Input.Connect();
         Images.LoadBuiltIn();
+        Shaders.Init();
         
         OpenSans = new FontSet("VoxUI.Open_Sans.static.OpenSans-Regular.ttf");
         

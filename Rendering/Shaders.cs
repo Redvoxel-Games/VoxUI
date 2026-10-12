@@ -1,154 +1,47 @@
+using System.Reflection;
+using System.Resources;
+using System.Text;
+
 namespace VoxUI.Rendering;
 
 public static class Shaders
 {
-    public static string RectVertex =
-        """
-        #version 330 core
+    public static string ReadStreamAsString(Stream stream)
+    {
+        byte[] data = new byte[stream.Length];
+        stream.ReadExactly(data, 0, data.Length);
+        return Encoding.UTF8.GetString(data, 0, data.Length);
+    }
+    
+    public static void Init()
+    {
+        // Load RectVertex.vert
+        var rectVertexStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("VoxUI.Assets.Shaders.RectVertex.vert");
+        if (rectVertexStream == null)
+            throw new MissingManifestResourceException("Rectangle vertex shader is missing or could not be loaded!");
+        RectVertex = ReadStreamAsString(rectVertexStream);
         
-        layout (location = 0) in vec3 vertPos;
+        // Load RectFragment.frag
+        var rectFragmentStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("VoxUI.Assets.Shaders.RectFragment.frag");
+        if (rectFragmentStream == null)
+            throw new MissingManifestResourceException("Rectangle fragment shader is missing or could not be loaded!");
+        RectFragment = ReadStreamAsString(rectFragmentStream);
         
-        uniform vec2 rectPos;
-        uniform vec2 rectSize;
-        uniform vec2 screenSize;
+        // Load TextFragment.frag
+        var textFragmentStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("VoxUI.Assets.Shaders.TextFragment.frag");
+        if (textFragmentStream == null)
+            throw new MissingManifestResourceException("Text fragment shader is missing or could not be loaded!");
+        TextFragment = ReadStreamAsString(textFragmentStream);
         
-        uniform vec2 UVMin;
-        uniform vec2 UVMax;
-        
-        out vec2 localPos;
-        out vec2 textureCoord;
-        
-        void main()
-        {
-            localPos = vertPos.xy;
-        
-            vec2 pos = rectPos + vertPos.xy * rectSize;
-            vec2 normalizedPos = pos / screenSize;
-            vec2 ndcPos = normalizedPos * 2.0 - 1.0;
-        
-            ndcPos.y = -ndcPos.y;
-        
-            gl_Position = vec4(ndcPos, vertPos.z, 1.0);
-            
-            textureCoord = mix(
-                UVMin,
-                UVMax,
-                vertPos.xy
-            );
-        }
-        """;
-
-    public static string RectFragment =
-        """
-        #version 330 core
-        
-        uniform vec2 rectSize;
-        uniform float rectLineWidth;
-        uniform vec4 cornerRadii;
-        uniform vec4 rectColor;
-        
-        in vec2 localPos;
-        
-        out vec4 FragColor;
-        
-        float roundedBoxSDF(vec2 p, vec2 b, vec4 r)
-        {
-            // Select the radius based on the quadrant.
-            float radius;
-        
-            if (p.x < 0.0)
-                radius = (p.y < 0.0) ? r.x : r.z;
-            else
-                radius = (p.y < 0.0) ? r.y : r.w;
-        
-            vec2 q = abs(p) - b + radius;
-        
-            return min(max(q.x, q.y), 0.0)
-                 + length(max(q, 0.0))
-                 - radius;
-        }
-        
-        void main()
-        {
-            // Convert from 0..1 to pixel coordinates centered on the rectangle.
-            vec2 p = localPos * rectSize - rectSize * 0.5;
-        
-            vec2 halfSize = rectSize * 0.5;
-        
-            // Corner radii in pixels.
-            vec4 radii = cornerRadii;
-        
-            // Prevent radii from extending beyond the rectangle.
-            float maxRadius = min(halfSize.x, halfSize.y);
-        
-            radii = min(radii, maxRadius);
-        
-            // Signed distance to the rounded rectangle.
-            float d = roundedBoxSDF(
-                p,
-                halfSize,
-                radii
-            );
-        
-            // Filled rectangle.
-            if (rectLineWidth < 0.0)
-            {
-                if (d > 0.0)
-                    discard;
-        
-                FragColor = rectColor;
-                return;
-            }
-        
-            // Border.
-            float innerD = roundedBoxSDF(
-                p,
-                halfSize - rectLineWidth,
-                max(radii - rectLineWidth, 0.0)
-            );
-        
-            // Outside outer boundary or inside inner boundary.
-            if (d > 0.0 || innerD < 0.0)
-                discard;
-        
-            FragColor = rectColor;
-        }
-        """;
-
-    public static string TextFragment =
-        """
-        #version 330 core
-        
-        in vec2 textureCoord;
-        
-        uniform sampler2D fontTexture;
-        uniform vec4 textColor;
-        
-        out vec4 FragColor;
-        
-        void main()
-        {
-            float alpha = texture(fontTexture, textureCoord).r;
-        
-            FragColor = vec4(textColor.rgb, textColor.a * alpha);
-        }
-        """;
-
-    public static string ImageFragment =
-        """
-        #version 330 core
-        
-        in vec2 textureCoord;
-        
-        uniform sampler2D image;
-        
-        out vec4 FragColor;
-        
-        void main()
-        {
-            vec4 col = texture(image, textureCoord);
-        
-            FragColor = col;
-        }
-        """;
+        // Load ImageFragment.frag
+        var imageFragmentStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("VoxUI.Assets.Shaders.ImageFragment.frag");
+        if (imageFragmentStream == null)
+            throw new MissingManifestResourceException("Image fragment shader is missing or could not be loaded!");
+        ImageFragment = ReadStreamAsString(imageFragmentStream);
+    }
+    
+    public static string RectVertex;
+    public static string RectFragment;
+    public static string TextFragment;
+    public static string ImageFragment;
 }

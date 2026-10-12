@@ -35,5 +35,7 @@
     <ItemGroup>
         <EmbeddedResource Include="Open_Sans/static/OpenSans-Regular.ttf" />
         <EmbeddedResource Include="Assets/*.png" />
+        <EmbeddedResource Include="Assets/Shaders/*.vert" />
+        <EmbeddedResource Include="Assets/Shaders/*.frag" />
     </ItemGroup>
 </Project>
