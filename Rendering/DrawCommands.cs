@@ -35,13 +35,16 @@ public class DrawRect(float x, float y, float width, float height, Color4 color,
     }
 }
 
-public class DrawImage(float x, float y, float width, float height, uint image, int zIndex) : DrawCommand(zIndex)
+public class DrawImage(float x, float y, float width, float height, uint image, bool invertX, bool invertY, int zIndex) : DrawCommand(zIndex)
 {
     public float X { get; } = x;
     public float Y { get; } = y;
     public float Width { get; } = width;
     public float Height { get; } = height;
     public uint Image { get; } = image;
+    
+    public bool InvertX { get; } = invertX;
+    public bool InvertY { get; } = invertY;
     
     public override void Draw(GL gl, Vector2 offset)
     {
@@ -53,8 +56,8 @@ public class DrawImage(float x, float y, float width, float height, uint image, 
         shader.SetVector2("screenSize", wSize);
         shader.SetVector2("rectPos", new Vector2(X, Y) + offset);
         shader.SetVector2("rectSize", new Vector2(Width, Height));
-        shader.SetVector2("UVMin", new Vector2(0));
-        shader.SetVector2("UVMax", new Vector2(1,1));
+        shader.SetVector2("UVMin", new Vector2(InvertX ? 1 : 0, InvertY ? 1 : 0));
+        shader.SetVector2("UVMax", new Vector2(InvertX ? 0 : 1, InvertY ? 0 : 1));
         
         gl.ActiveTexture(TextureUnit.Texture0);
         gl.BindTexture(TextureTarget.Texture2D, Image);

@@ -332,7 +332,7 @@ public class WindowDock : DockMember
             Window.Size = Size;
         }
 
-        if (!Window.IsBeingDrawn)
+        if (!Window.DrawnThisFrame && !Window.FirstDraw)
         {
             WantsDispose = true;
         }
@@ -786,5 +786,46 @@ public class RootDock : DockMember
         Member?.Handle();
         Member?.Size = Size;
         Member?.Position = Position;
+
+        var draggedWindow = WindowDefinition.WindowToDock;
+        
+        if (Member == null && draggedWindow != null)
+        {
+            var center = Position + (Size / 2f);
+            
+            Console.WriteLine(center);
+            
+            var cornerRadii = CornerRadii.All(UIStyle.ButtonCornerRadius);
+            
+            var color = UIStyle.PrimaryColor;
+            color *= new Color4(1, 1, 1, 0.5f);
+            
+            var dockRectPos = center - new Vector2(32, 32);
+            var dockRectSize = new Vector2(64f, 64f);
+                
+            color = UIStyle.PrimaryColor * new Color4(1, 1, 1, 0.5f);
+            if (VoxUIR.IsMouseInsideRect(dockRectPos, dockRectSize))
+            {
+                color *= new Color4(1, 1, 1, 1.5f);
+
+                if (VoxUIR.IsMouseButtonJustReleased(MouseButton.Left))
+                {
+                    Member = new WindowDock(draggedWindow);
+                }
+            }
+            Renderer.AddRect(dockRectPos, dockRectSize, color, cornerRadii, zIndex:-10, focusOrder:draggedWindow.FocusOrder);
+        }
+    }
+}
+
+public static partial class VoxUIR
+{
+    public static Vector2 GetAvailableContentRegion()
+    {
+        var drawPos = GetDrawPositionInWindowSpace();
+        var size = new Vector2(MathF.Max(_currentMaxSizeX, CurrentWindow!.Size.X) - UIStyle.WindowPadding*2.5f,
+            MathF.Max(_currentMaxSizeY, CurrentWindow!.Size.Y) - UIStyle.WindowPadding*2.5f - UIStyle.WindowHeaderSize);
+
+        return size - drawPos;
     }
 }

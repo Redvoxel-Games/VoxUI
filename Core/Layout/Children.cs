@@ -61,6 +61,7 @@ public static partial class VoxUIR
         CurrentWindow.Position = parentWindow.Position + position;
         CurrentWindow.Size = size;
         CurrentWindow.IsBeingDrawn = true;
+        CurrentWindow.DrawnThisFrame = true;
     }
 
     /// <summary>

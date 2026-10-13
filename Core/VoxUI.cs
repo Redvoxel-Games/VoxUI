@@ -120,6 +120,8 @@ public static partial class VoxUIR
             return false;
         }
         
+        CurrentWindow.DrawnThisFrame = true;
+        
         if (position.HasValue && CurrentWindow.FirstDraw) CurrentWindow.Position = position.Value;
         if (size.HasValue && CurrentWindow.FirstDraw) CurrentWindow.Size = size.Value;
 
@@ -303,7 +305,7 @@ public static partial class VoxUIR
             }
 
             var offset = new Vector2(4, 4);
-            Renderer.AddImage(CurrentWindow.Position + new Vector2(CurrentWindow.Size.X-closeButtonSize.X) + offset, closeButtonSize - offset*2, Images.Xmark, 11);
+            Renderer.AddImage(CurrentWindow.Position + new Vector2(CurrentWindow.Size.X-closeButtonSize.X) + offset, closeButtonSize - offset*2, Images.Xmark, zindex:11);
         }
         
         if (UIStyle.WindowOutline)

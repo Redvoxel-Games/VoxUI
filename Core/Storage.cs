@@ -116,6 +116,8 @@ public class WindowDefinition
         }
     } = false;
 
+    public bool DrawnThisFrame = false;
+
     internal WindowDock? OwnerDock = null;
 
     internal bool StackDockOverride = false;

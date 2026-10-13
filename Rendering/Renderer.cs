@@ -105,6 +105,11 @@ public static class Renderer
 
     public static void Update(double deltaTime)
     {
+        foreach (var window in WindowDefinition.Windows.Values)
+        {
+            window.DrawnThisFrame = false;
+        }
+        
         DeltaTime = deltaTime;
         Input.Update(deltaTime);
     }
@@ -215,6 +220,8 @@ public static class Renderer
 
         foreach (var windowDef in WindowDefinition.Windows.Values)
         {
+            if (!windowDef.DrawnThisFrame) continue;
+            
             if (windowDef.DockOverride)
             {
                 dockedWindows.Add(windowDef);
@@ -286,14 +293,14 @@ public static class Renderer
         DrawList.Add(new DrawText(position.X, position.Y, text, size, color ?? Color4.White, zIndex, (int)pPos.X, (int)pPos.Y, (uint)pSize.X, (uint)pSize.Y) {NoClipping = noClipping});
     }
 
-    public static void AddImage(float x, float y, float width, float height, uint image, int zIndex = 0)
+    public static void AddImage(float x, float y, float width, float height, uint image, bool invertX = false, bool invertY = false, int zIndex = 0)
     {
-        DrawList.Add(new DrawImage(x, y, width, height, image, zIndex));
+        DrawList.Add(new DrawImage(x, y, width, height, image, invertX, invertY, zIndex));
     }
 
-    public static void AddImage(Vector2 position, Vector2 size, uint image, int zindex = 0)
+    public static void AddImage(Vector2 position, Vector2 size, uint image, bool invertX = false, bool invertY = false,  int zindex = 0)
     {
-        DrawList.Add(new DrawImage(position.X, position.Y, size.X, size.Y, image, zindex));
+        DrawList.Add(new DrawImage(position.X, position.Y, size.X, size.Y, image, invertX, invertY, zindex));
     }
 
     public static uint QuadVao;

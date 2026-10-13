@@ -57,7 +57,7 @@ public partial class VoxUIR
         
         var nodeImage = isOpen ? Images.DownArrow : Images.RightArrow;
         
-        if (!isLeaf) Renderer.AddImage(pos+2, buttonSize-4, nodeImage, 1);
+        if (!isLeaf) Renderer.AddImage(pos+2, buttonSize-4, nodeImage, zindex:1);
 
         float imgOffset = 0;
         if (image.HasValue)

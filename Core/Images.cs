@@ -65,10 +65,10 @@ public static class Images
 // ReSharper disable once InconsistentNaming
 public static partial class VoxUIR
 {
-    public static void Image(Vector2 size, uint image)
+    public static void Image(Vector2 size, uint image, bool invertX = false, bool invertY = false)
     {
         var pos = GetDrawPositionInScreenSpace();
-        Renderer.AddImage(pos, size, image);
+        Renderer.AddImage(pos, size, image, invertX, invertY);
         
         _currentDrawY += size.Y + UIStyle.ItemSpacing;
         _currentMaxSizeX = MathF.Max(_currentMaxSizeX, size.X);

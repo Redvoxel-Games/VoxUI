@@ -97,7 +97,7 @@ public static unsafe partial class VoxUIR
         {
             float fillPadding = 2;
             var fillOffset = new Vector2(fillPadding, fillPadding) + sizeOffVec;
-            Renderer.AddImage(pos + fillOffset, size - fillOffset*2, Images.Checkmark, 1);
+            Renderer.AddImage(pos + fillOffset, size - fillOffset*2, Images.Checkmark, zindex:1);
         }
 
         if (inactive)
