@@ -168,4 +168,9 @@ public enum TreeNodeFlags : uint
     /// Opens by default.
     /// </summary>
     DefaultOpen = 0b0000_0100,
+    
+    /// <summary>
+    /// Applies lighter color, as if it were selected.
+    /// </summary>
+    Selected = 0b0000_1000,
 }

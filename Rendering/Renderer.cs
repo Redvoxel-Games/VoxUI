@@ -82,6 +82,11 @@ public struct Color4(float r = 0, float g = 0, float b = 0, float a = 1)
     {
         return new Color4(r / 255f, g / 255f, b / 255f);
     }
+
+    public static Color4 FromRgba(int r, int g, int b, float a)
+    {
+        return new Color4(r / 255f, g / 255f, b / 255f, a);
+    }
 }
 public static class Renderer
 {

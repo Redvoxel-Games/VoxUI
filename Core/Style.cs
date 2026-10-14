@@ -21,6 +21,7 @@ public static class UIStyle
     public static Color4 RadioButtonFillColor = Color4.FromRgb(200,0,0);
     public static Color4 ScrollbarColor = new Color4(0, 0, 0, 0.75f);
     public static Color4 TreeNodeAlignmentbarColor = Color4.FromRgb(100,100,100);
+    public static Color4 TreeNodeSelectedColor = Color4.FromRgba(255,255,255,0.2f);
     
     public static bool WindowOutline = true;
     public static float WindowCornerRadius = 8;

@@ -52,12 +52,21 @@ public partial class VoxUIR
                 bColor = UIStyle.ButtonColor.Lerp(Color4.Black, 0.2f);
             }
             
-            Renderer.AddRect(pos, buttonSize, bColor);
+            Renderer.AddRect(pos, buttonSize, bColor, CornerRadii.All(UIStyle.ButtonCornerRadius));
         }
-        
-        var nodeImage = isOpen ? Images.DownArrow : Images.RightArrow;
-        
-        if (!isLeaf) Renderer.AddImage(pos+2, buttonSize-4, nodeImage, zindex:1);
+
+        var interactPos = pos;
+        var interactSize = new Vector2(CurrentWindow.Size.X, UIStyle.TextSize);
+
+        if (!isLeaf)
+        {
+            interactPos += new Vector2(buttonSize.X,0);
+            interactSize -= new Vector2(buttonSize.X,0);
+            
+            var nodeImage = isOpen ? Images.DownArrow : Images.RightArrow;
+            
+            Renderer.AddImage(pos+2, buttonSize-4, nodeImage, zindex:1);
+        }
 
         float imgOffset = 0;
         if (image.HasValue)
@@ -66,7 +75,19 @@ public partial class VoxUIR
             
             Renderer.AddImage(pos.X + buttonSize.X + 2, pos.Y, UIStyle.TextSize, UIStyle.TextSize, image.Value);
         }
-        Renderer.AddText(pos.X + buttonSize.X + 2 + imgOffset, pos.Y, label, UIStyle.TextSize, UIStyle.TextColor);
+        
+        var hovered = IsMouseInsideRect(interactPos, interactSize);
+
+        var overlayColor = UIStyle.TreeNodeSelectedColor;
+
+        if (hovered) overlayColor = overlayColor.Lerp(Color4.White, 0.1f);
+        
+        if (treeNodeFlags.HasFlag(TreeNodeFlags.Selected) || hovered)
+        {
+            Renderer.AddRect(interactPos, interactSize, overlayColor, CornerRadii.All(UIStyle.ButtonCornerRadius), zIndex:1);
+        }
+        
+        Renderer.AddText(pos.X + buttonSize.X + 2 + imgOffset, pos.Y, label, UIStyle.TextSize, UIStyle.TextColor, zIndex:2);
         
         TreeNodeAlignStarts[itemId] = pos.Y + UIStyle.TextSize + 1;
 
@@ -79,7 +100,7 @@ public partial class VoxUIR
         
         Advance(isOpen ? UIStyle.TreeNodeIndentFactor : 0, UIStyle.TextSize + UIStyle.ItemSpacing, buttonSize.X + textSize.X + 2 + imgOffset, buttonSize.Y);
         
-        return new TreeNodeResult(isOpen, false);
+        return new TreeNodeResult(isOpen, hovered && IsMouseButtonJustReleased(MouseButton.Left));
     }
 
     public static void EndTreeNode()
